@@ -68,6 +68,7 @@
                 <p id="sentence" class="sentenceClass"></p>
                 <img src="assets/img/cat.gif" id="img-cat" class="img-fluid d-none" height="150" width="150" alt="">
                 <p id="progress" class="text-info"></p>
+                <p id="rank" class="text-info"></p>
             </div>
 
             <!-- Leaderboard Section -->
@@ -79,10 +80,13 @@
                             <th>Rank</th>
                             <th>Name</th>
                             <th>Time (seconds)</th>
+                            <th>WPM</th>
+                            <th>Errors</th>
                         </tr>
                     </thead>
                     <tbody id="leaderboard-body"></tbody>
                 </table>
+
             </div>
         </div>
 
@@ -100,6 +104,7 @@
         const gameSection = document.getElementById("game-section");
         const sentenceEl = document.getElementById("sentence");
         const progressEl = document.getElementById("progress");
+        const rankEl = document.getElementById("rank");
 
         const leaderboardSection = document.getElementById("leaderboard-section"); // NEW
         const leaderboardBody = document.getElementById("leaderboard-body"); // NEW
@@ -203,28 +208,71 @@
 
             renderSentence();
 
-            if (typedChars.length === sentence.length &&
-                typedChars.every((char, i) => char === sentence[i])) {
+            if (typedChars.length === sentence.length) {
                 endGame();
             }
         }
 
         function endGame() {
             clearInterval(timerInterval);
-            const timeTaken = startTime ? ((Date.now() - startTime) / 1000).toFixed(2) : "0.00";
-            progressEl.textContent = `Completed in ${timeTaken} seconds!`;
+            const timeTakenSec = startTime ? ((Date.now() - startTime) / 1000) : 0;
+            const timeTaken = Number(timeTakenSec.toFixed(2));
+
+            // Count errors
+            let errors = 0;
+            for (let i = 0; i < sentence.length; i++) {
+                if (typedChars[i] !== sentence[i]) errors++;
+            }
+
+            // Calculate WPM
+            const wordsCount = sentence.trim().length === 0 ? 0 : sentence.trim().split(/\s+/).length;
+            const minutes = timeTakenSec / 60;
+            const wpm = minutes > 0 ? Number((wordsCount / minutes).toFixed(2)) : 0;
+
+            // Save temporary entry to compute rank
+            let leaderboard = JSON.parse(localStorage.getItem("leaderboard")) || [];
+            const newEntry = { name: playerName, time: timeTaken, wpm, errors, text: sentence };
+            leaderboard.push(newEntry);
+            leaderboard.sort((a, b) => a.time - b.time);
+
+            // Rank is index + 1
+            const rank = leaderboard.findIndex(entry =>
+                entry.name === playerName &&
+                entry.time === timeTaken &&
+                entry.wpm === wpm &&
+                entry.errors === errors
+            ) + 1;
+
+            // Save updated leaderboard (top 10)
+            leaderboard = leaderboard.slice(0, 10);
+            localStorage.setItem("leaderboard", JSON.stringify(leaderboard));
+
+
+            // Show summary with rank
+            progressEl.innerHTML = `Completed in ${timeTaken}s <br> Congratulations! You ranked #${rank}`;
+            rankEl.textContent = ``;
             document.removeEventListener("keydown", handleTyping);
 
-            saveToLeaderboard(playerName, timeTaken); // NEW
-            showLeaderboard(); // NEW
+            showLeaderboard();
         }
 
-        // --- NEW: Save result to localStorage ---
-        function saveToLeaderboard(name, time) {
+
+        // Save result to localStorage (store numbers + the sentence text)
+        function saveToLeaderboard(name, time, wpm, errors, text) {
             let leaderboard = JSON.parse(localStorage.getItem("leaderboard")) || [];
-            leaderboard.push({ name, time: parseFloat(time) });
-            leaderboard.sort((a, b) => a.time - b.time); // fastest first
-            leaderboard = leaderboard.slice(0, 10); // keep top 10
+            leaderboard.push({
+                name: name || "Anonymous",
+                time: Number(time),
+                wpm: Number(wpm),
+                errors: Number(errors),
+                text: text || ""
+            });
+
+            // Sort by fastest time (change if you prefer sorting by WPM)
+            leaderboard.sort((a, b) => a.time - b.time);
+
+            // Keep some reasonable number in storage (you only show top 5)
+            leaderboard = leaderboard.slice(0, 20);
             localStorage.setItem("leaderboard", JSON.stringify(leaderboard));
         }
 
@@ -241,23 +289,57 @@
             leaderboardBody.innerHTML = "";
             let leaderboard = JSON.parse(localStorage.getItem("leaderboard")) || [];
 
-            // sort fastest first, keep top 5
+            // Upgrade old entries to include wpm/errors if missing
+            leaderboard = leaderboard.map(entry => {
+                if (!entry.text) return entry;
+
+                // Compute errors if missing
+                if (typeof entry.errors !== "number") {
+                    let errors = 0;
+                    for (let i = 0; i < entry.text.length; i++) {
+                        if (!entry.typed || entry.typed[i] !== entry.text[i]) errors++;
+                    }
+                    entry.errors = errors;
+                }
+
+                // Compute wpm if missing
+                if (typeof entry.wpm !== "number" && entry.time) {
+                    const words = entry.text.trim().length === 0 ? 0 : entry.text.trim().split(/\s+/).length;
+                    const minutes = entry.time / 60;
+                    entry.wpm = minutes > 0 ? Number((words / minutes).toFixed(2)) : 0;
+                }
+
+                return entry;
+            });
+
             leaderboard.sort((a, b) => a.time - b.time);
             leaderboard = leaderboard.slice(0, 5);
 
-            leaderboard.forEach((entry, index) => {
-                leaderboardBody.innerHTML += `
-            <tr>
-                <td>${index + 1}</td>
-                <td>${entry.name}</td>
-                <td>${entry.time}</td>
-            </tr>
-        `;
-            });
+            const rows = leaderboard.map((entry, index) => `
+                <tr>
+                    <td>${index + 1}</td>
+                    <td>${entry.name}</td>
+                    <td>${entry.time.toFixed(2)}</td>
+                    <td>${entry.wpm ?? "—"}</td>
+                    <td>${entry.errors ?? "—"}</td>
+                </tr>
+            `).join("");
 
+            leaderboardBody.innerHTML = rows;
             leaderboardSection.classList.remove("d-none");
         }
 
+
+        // small helper to avoid HTML injection in names
+        function escapeHtml(str) {
+            if (!str) return "";
+            return String(str)
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;")
+                .replace(/'/g, "&#039;");
+        }
     </script>
 
 
