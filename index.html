@@ -27,12 +27,12 @@
             <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav ms-auto">
                     <li class="nav-item">
-                        <a class="nav-link text-white fs-5 px-3 mx-lg-2" href="#" id="nav-home">
+                        <a class="nav-link text-white fs-5 px-3 mx-lg-2" href="index.html" id="nav-home">
                             <i class="bi bi-house me-2"></i>Home
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link text-white fs-5 px-3 mx-lg-2" href="#" id="nav-leaderboard">
+                        <a class="nav-link text-white fs-5 px-3 mx-lg-2" href="leaderboard.html" id="nav-leaderboard">
                             <i class="bi bi-trophy me-2"></i>Leaderboard
                         </a>
                     </li>
@@ -323,6 +323,7 @@
                     <td>${entry.wpm ?? "—"}</td>
                     <td>${entry.errors ?? "—"}</td>
                 </tr>
+                
             `).join("");
 
             leaderboardBody.innerHTML = rows;
