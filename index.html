@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta content="width=device-width, initial-scale=1.0" name="viewport">
+    <title>Document</title>
+    <link href="assets/img/logo/logo.png" rel="icon">
+    <link href="assets/vendor/bootstrap/css/bootstrap.min.css" rel="stylesheet">
+    <link href="assets/vendor/bootstrap-icons/bootstrap-icons.css" rel="stylesheet">
+    <link href="assets/css/style.css" rel="stylesheet">
+</head>
+
+<body class="text-white">
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg py-4">
+        <div class="container">
+            <a class="navbar-brand text-white fw-bold fs-2 text-uppercase letter-spacing-2" href="#">
+                Just Type
+                <span class="logo-icon ms-2">
+                    <i class="bi bi-keyboard"></i>
+                </span>
+            </a>
+            <button class="navbar-toggler border-0" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <i class="bi bi-list text-white fs-4"></i>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link text-white fs-5 px-3 mx-lg-2" href="#" id="nav-home">
+                            <i class="bi bi-house me-2"></i>Home
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link text-white fs-5 px-3 mx-lg-2" href="#" id="nav-leaderboard">
+                            <i class="bi bi-trophy me-2"></i>Leaderboard
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Container -->
+    <div class="container game-container center">
+        <div class="game">
+            <!-- Name Input Section -->
+            <div id="name-section" class="row justify-content-center align-items-center" style="min-height: 60vh;">
+                <div class="col-12 col-md-8 col-lg-6">
+                    <div class="text-center">
+                        <h5 class="fw-light text-light mb-3">Enter Name to Play the Game!</h5>
+                        <form id="gameForm" class="d-flex flex-column align-items-center gap-4">
+                            <div class="w-100 d-flex justify-content-center">
+                                <input type="text" class="form-control text-center border-0 py-2" id="playerName"
+                                    placeholder="Enter Name" required>
+                            </div>
+                            <button type="submit" class="btn btn-game btn px-5 fw-semibold">
+                                <i class="bi bi-play-circle me-2"></i>Submit
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Typing Game Section -->
+        <div id="game-section" class="d-none text-center my-5 game-section">
+            <p id="sentence" class="fs-4"></p>
+            <p id="progress" class="text-info"></p>
+        </div>
+
+        <!-- Leaderboard Section -->
+        <div id="leaderboard-section" class="d-none my-5">
+            <h3 class="text-center mb-4">Leaderboard</h3>
+            <table class="table table-dark table-striped text-center">
+                <thead>
+                    <tr>
+                        <th>Rank</th>
+                        <th>Name</th>
+                        <th>Time (seconds)</th>
+                    </tr>
+                </thead>
+                <tbody id="leaderboard-body"></tbody>
+            </table>
+        </div>
+    </div>
+
+    <script src="assets/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
+</body>
+
+</html>

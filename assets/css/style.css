@@ -1,0 +1,57 @@
+:root {
+    --game-bg: #323437;
+    --game-yellow: #ffc107;
+}
+
+body {
+    background-color: var(--game-bg);
+    min-height: 100vh;
+    font-family: 'Courier New', Courier, monospace;
+}
+
+.navbar {
+    height: 15vh;
+}
+
+.game-container {
+    height: 85vh;
+}
+
+.game {
+    width: 100%;
+    margin-top: -10%;
+}
+
+.center {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.game-input {
+    max-width: 400px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    transition: all 0.2s ease;
+}
+
+.game-input:focus {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.2);
+}
+
+
+.btn-game {
+    background-color: var(--game-yellow);
+    border-color: var(--game-yellow);
+    color: #000;
+    transition: all 0.3s ease;
+}
+
+.btn-game:hover,
+.btn-game:focus {
+    background-color: #ffb300;
+    border-color: #ffb300;
+    color: #000;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 5px rgba(255, 193, 7, 0.4);
+}
