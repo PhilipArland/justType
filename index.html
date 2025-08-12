@@ -63,6 +63,7 @@
             </div>
 
             <div id="game-section" class="d-none text-center my-5 game-section">
+                <h2 id="time" class="text-start text-warning fw-bold d-none"></h2>
                 <p id="sentence"></p>
                 <p id="progress" class="text-info"></p>
             </div>
@@ -89,7 +90,7 @@
     <script src="assets/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
     <script>
         const sentences = [
-            "more feel here only see after people by move govern do from thing fact most person give out she also day too be have see play no they only govern line can people again at just so few before, more feel here only see after people by move govern do from thing fact most person give out she also day too be have see play no they only govern line can people again at just so few before"
+            "best luck"
         ];
 
         const form = document.getElementById("gameForm");
@@ -101,6 +102,8 @@
         let sentence = "";
         let currentIndex = 0;
         let startTime;
+        let timerInterval;
+        let typedChars = [];
 
         form.addEventListener("submit", function (e) {
             e.preventDefault();
@@ -111,11 +114,11 @@
             sentence = sentences[0];
             currentIndex = 0;
             startTime = null;
+            typedChars = [];
+            clearInterval(timerInterval);
             renderSentence();
             document.addEventListener("keydown", handleTyping);
         });
-
-        let typedChars = [];
 
         function renderSentence() {
             let html = "";
@@ -133,41 +136,55 @@
                 }
             }
 
-            // Put inside inner wrapper
             sentenceEl.innerHTML = `<div id="sentence-inner">${html}</div>`;
             const inner = document.getElementById("sentence-inner");
 
-            // --- Measure actual line position ---
-            const currentCharEl = inner.querySelector(".current");
-            const containerTop = sentenceEl.getBoundingClientRect().top;
-            const currentTop = currentCharEl.getBoundingClientRect().top;
-            const lineHeightPx = parseFloat(getComputedStyle(sentenceEl).lineHeight);
+            // safe: use .current if present, otherwise fallback to last char (prevents null errors)
+            const currentCharEl = inner.querySelector(".current") || inner.lastElementChild;
+            if (currentCharEl) {
+                const containerTop = sentenceEl.getBoundingClientRect().top;
+                const currentTop = currentCharEl.getBoundingClientRect().top;
+                // fallback line height if computed style is weird
+                const lineHeightPx = parseFloat(getComputedStyle(sentenceEl).lineHeight) || 24;
+                const currentLine = Math.floor((currentTop - containerTop) / lineHeightPx);
 
-            // Which line number is current char on? (0 = first line)
-            const currentLine = Math.floor((currentTop - containerTop) / lineHeightPx);
-
-            // Scroll only if current line is 2 or more (3rd visual line)
-            let shiftLines = 0;
-            if (currentLine >= 2) {
-                shiftLines = currentLine - 1; // keep cursor on 2nd line
+                let shiftLines = 0;
+                if (currentLine >= 2) {
+                    shiftLines = currentLine - 1; // keep cursor on 2nd line
+                }
+                inner.style.transform = `translateY(${-shiftLines * lineHeightPx}px)`;
+            } else {
+                // nothing to scroll
+                inner.style.transform = "";
             }
 
-            inner.style.transform = `translateY(${-shiftLines * lineHeightPx}px)`;
-            // ------------------------------------
-
-            progressEl.textContent = `${typedChars.length}/${sentence.length}`;
+            // ensure progress never exceeds sentence length
+            const progressCount = Math.min(typedChars.length, sentence.length);
+            progressEl.textContent = `${progressCount}/${sentence.length}`;
         }
 
-
-
-
         function handleTyping(e) {
-            if (!startTime) startTime = Date.now();
+            if (!startTime) {
+                startTime = Date.now();
+
+                const timeEl = document.getElementById("time");
+                if (timeEl) timeEl.classList.remove("d-none");
+
+                const updateTime = () => {
+                    const elapsed = Math.floor((Date.now() - startTime) / 1000);
+                    const min = Math.floor(elapsed / 60);
+                    const sec = elapsed % 60;
+                    if (timeEl) timeEl.textContent = `${min}:${sec.toString().padStart(2, "0")}`;
+                };
+
+                updateTime();
+                timerInterval = setInterval(updateTime, 1000);
+            }
 
             if (e.key === "Backspace") {
                 if (typedChars.length > 0) {
                     typedChars.pop();
-                    currentIndex--;
+                    currentIndex = Math.max(0, currentIndex - 1);
                     renderSentence();
                 }
                 return;
@@ -175,21 +192,29 @@
 
             if (e.key.length !== 1) return;
 
+            // prevent typing more characters than the sentence length
+            if (typedChars.length >= sentence.length) return;
+
             typedChars.push(e.key);
             currentIndex++;
 
             renderSentence();
-            if (typedChars.length === sentence.length) endGame();
+
+            // completion check (exact match)
+            if (typedChars.length === sentence.length &&
+                typedChars.every((char, i) => char === sentence[i])) {
+                endGame();
+            }
         }
 
-
-
         function endGame() {
-            const timeTaken = ((Date.now() - startTime) / 1000).toFixed(2);
+            clearInterval(timerInterval);
+            const timeTaken = startTime ? ((Date.now() - startTime) / 1000).toFixed(2) : "0.00";
             progressEl.textContent = `Completed in ${timeTaken} seconds!`;
             document.removeEventListener("keydown", handleTyping);
         }
     </script>
+
 
 
 </body>
