@@ -45,8 +45,17 @@
     <div class="container game-container">
         <div id="leaderboard-section" class="d-none my-5 w-100">
             <div class="leaderboard-header d-flex justify-content-between align-items-center mb-3">
-                <h3 class="mb-0">Leaderboard</h3>
-                <input type="text" id="search-leaderboard" class="form-control w-auto" placeholder="Search name...">
+                <h2 class="mb-0 text-warning fw-semibold">Leaderboard</h2>
+                <div class="d-flex gap-2">
+                    <input type="text" id="search-leaderboard" class="form-control w-auto" placeholder="Search name...">
+                    <button id="clear-leaderboard" class="btn btn-danger">
+                        <i class="bi bi-trash"></i>
+                    </button>
+                    <button id="sort-leaderboard" class="btn btn-dark">
+                        <i class="bi bi-sort-numeric-down"></i>
+                    </button>
+                </div>
+
             </div>
 
             <table class="table table-dark text-center">
@@ -62,48 +71,50 @@
                 <tbody id="leaderboard-body"></tbody>
             </table>
             <div class="text-center mt-4">
-                <button id="clear-leaderboard" class="btn btn-danger">
-                    <i class="bi bi-trash me-2"></i> Clear Leaderboard
-                </button>
+
             </div>
         </div>
     </div>
 
     <script src="assets/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
     <script>
-        document.getElementById("clear-leaderboard").addEventListener("click", function () {
-            if (confirm("Are you sure you want to clear the leaderboard?")) {
-                localStorage.removeItem("leaderboard");
-                document.getElementById("leaderboard-body").innerHTML = `<tr><td colspan="5">No scores yet</td></tr>`;
-            }
-        });
+        const leaderboardBody = document.getElementById("leaderboard-body");
+        let leaderboard = JSON.parse(localStorage.getItem("leaderboard")) || [];
+        let sortAsc = true; // true = fastest first, false = slowest first
 
-        document.addEventListener("DOMContentLoaded", function () {
-            const leaderboardSection = document.getElementById("leaderboard-section");
-            const leaderboardBody = document.getElementById("leaderboard-body");
-
-            let leaderboard = JSON.parse(localStorage.getItem("leaderboard")) || [];
-
-            // Sort fastest first
-            leaderboard.sort((a, b) => a.time - b.time);
-
+        function renderLeaderboard() {
             if (leaderboard.length > 0) {
                 leaderboardBody.innerHTML = leaderboard.map((entry, index) => `
-            <tr>
-                <td>${index + 1}</td>
-                <td>${entry.name}</td>
-                <td>${entry.time}</td>
-                <td>${entry.wpm ?? "—"}</td>
-                <td>${entry.errors ?? "—"}</td>
-            </tr>
-        `).join("");
+                <tr>
+                    <td>${index + 1}</td>
+                    <td>${entry.name}</td>
+                    <td>${entry.time}</td>
+                    <td>${entry.wpm ?? "—"}</td>
+                    <td>${entry.errors ?? "—"}</td>
+                </tr>
+            `).join("");
             } else {
                 leaderboardBody.innerHTML = `<tr><td colspan="5">No scores yet</td></tr>`;
             }
+        }
 
-            leaderboardSection.classList.remove("d-none");
+        // Clear leaderboard
+        document.getElementById("clear-leaderboard").addEventListener("click", function () {
+            if (confirm("Are you sure you want to clear the leaderboard?")) {
+                localStorage.removeItem("leaderboard");
+                leaderboard = [];
+                renderLeaderboard();
+            }
         });
 
+        // Initial load
+        document.addEventListener("DOMContentLoaded", function () {
+            leaderboard.sort((a, b) => a.time - b.time); // default fastest first
+            renderLeaderboard();
+            document.getElementById("leaderboard-section").classList.remove("d-none");
+        });
+
+        // Search
         document.getElementById("search-leaderboard").addEventListener("input", function () {
             const query = this.value.toLowerCase();
             const rows = document.querySelectorAll("#leaderboard-body tr");
@@ -117,7 +128,21 @@
                 }
             });
         });
+
+        // Sort toggle
+        document.getElementById("sort-leaderboard").addEventListener("click", function () {
+            sortAsc = !sortAsc;
+
+            leaderboard.sort((a, b) => sortAsc ? a.time - b.time : b.time - a.time);
+
+            // Change icon
+            const sortIcon = this.querySelector("i");
+            sortIcon.className = sortAsc ? "bi bi-sort-numeric-down" : "bi bi-sort-numeric-up";
+
+            renderLeaderboard();
+        });
     </script>
+
 
 </body>
 
