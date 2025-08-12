@@ -4,7 +4,7 @@
 <head>
     <meta charset="utf-8">
     <meta content="width=device-width, initial-scale=1.0" name="viewport">
-    <title>Document</title>
+    <title>JustType</title>
     <link href="assets/img/logo/logo.png" rel="icon">
     <link href="assets/vendor/bootstrap/css/bootstrap.min.css" rel="stylesheet">
     <link href="assets/vendor/bootstrap-icons/bootstrap-icons.css" rel="stylesheet">
@@ -61,13 +61,14 @@
                     </div>
                 </div>
             </div>
+
+            <div id="game-section" class="d-none text-center my-5 game-section">
+                <p id="sentence"></p>
+                <p id="progress" class="text-info"></p>
+            </div>
         </div>
 
         <!-- Typing Game Section -->
-        <div id="game-section" class="d-none text-center my-5 game-section">
-            <p id="sentence" class="fs-4"></p>
-            <p id="progress" class="text-info"></p>
-        </div>
 
         <!-- Leaderboard Section -->
         <div id="leaderboard-section" class="d-none my-5">
@@ -86,6 +87,111 @@
     </div>
 
     <script src="assets/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
+    <script>
+        const sentences = [
+            "more feel here only see after people by move govern do from thing fact most person give out she also day too be have see play no they only govern line can people again at just so few before, more feel here only see after people by move govern do from thing fact most person give out she also day too be have see play no they only govern line can people again at just so few before"
+        ];
+
+        const form = document.getElementById("gameForm");
+        const nameSection = document.getElementById("name-section");
+        const gameSection = document.getElementById("game-section");
+        const sentenceEl = document.getElementById("sentence");
+        const progressEl = document.getElementById("progress");
+
+        let sentence = "";
+        let currentIndex = 0;
+        let startTime;
+
+        form.addEventListener("submit", function (e) {
+            e.preventDefault();
+
+            nameSection.classList.add("d-none");
+            gameSection.classList.remove("d-none");
+
+            sentence = sentences[0];
+            currentIndex = 0;
+            startTime = null;
+            renderSentence();
+            document.addEventListener("keydown", handleTyping);
+        });
+
+        let typedChars = [];
+
+        function renderSentence() {
+            let html = "";
+            for (let i = 0; i < sentence.length; i++) {
+                if (i < typedChars.length) {
+                    if (typedChars[i] === sentence[i]) {
+                        html += `<span class="correct">${sentence[i]}</span>`;
+                    } else {
+                        html += `<span class="incorrect">${sentence[i]}</span>`;
+                    }
+                } else if (i === typedChars.length) {
+                    html += `<span class="current">${sentence[i]}</span>`;
+                } else {
+                    html += `<span class="remaining">${sentence[i]}</span>`;
+                }
+            }
+
+            // Put inside inner wrapper
+            sentenceEl.innerHTML = `<div id="sentence-inner">${html}</div>`;
+            const inner = document.getElementById("sentence-inner");
+
+            // --- Measure actual line position ---
+            const currentCharEl = inner.querySelector(".current");
+            const containerTop = sentenceEl.getBoundingClientRect().top;
+            const currentTop = currentCharEl.getBoundingClientRect().top;
+            const lineHeightPx = parseFloat(getComputedStyle(sentenceEl).lineHeight);
+
+            // Which line number is current char on? (0 = first line)
+            const currentLine = Math.floor((currentTop - containerTop) / lineHeightPx);
+
+            // Scroll only if current line is 2 or more (3rd visual line)
+            let shiftLines = 0;
+            if (currentLine >= 2) {
+                shiftLines = currentLine - 1; // keep cursor on 2nd line
+            }
+
+            inner.style.transform = `translateY(${-shiftLines * lineHeightPx}px)`;
+            // ------------------------------------
+
+            progressEl.textContent = `${typedChars.length}/${sentence.length}`;
+        }
+
+
+
+
+        function handleTyping(e) {
+            if (!startTime) startTime = Date.now();
+
+            if (e.key === "Backspace") {
+                if (typedChars.length > 0) {
+                    typedChars.pop();
+                    currentIndex--;
+                    renderSentence();
+                }
+                return;
+            }
+
+            if (e.key.length !== 1) return;
+
+            typedChars.push(e.key);
+            currentIndex++;
+
+            renderSentence();
+            if (typedChars.length === sentence.length) endGame();
+        }
+
+
+
+        function endGame() {
+            const timeTaken = ((Date.now() - startTime) / 1000).toFixed(2);
+            progressEl.textContent = `Completed in ${timeTaken} seconds!`;
+            document.removeEventListener("keydown", handleTyping);
+        }
+    </script>
+
+
 </body>
 
 </html>
