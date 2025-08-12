@@ -62,29 +62,31 @@
                 </div>
             </div>
 
+            <!-- Typing Game Section -->
             <div id="game-section" class="d-none text-center my-5 game-section">
-                <h2 id="time" class="text-start text-warning fw-bold d-none"></h2>
-                <p id="sentence"></p>
+                <h2 id="time" class="text-start text-warning fw-bold d-none timeClass"></h2>
+                <p id="sentence" class="sentenceClass"></p>
+                <img src="assets/img/cat.gif" id="img-cat" class="img-fluid d-none" height="150" width="150" alt="">
                 <p id="progress" class="text-info"></p>
+            </div>
+
+            <!-- Leaderboard Section -->
+            <div id="leaderboard-section" class="d-none my-5">
+                <h3 class="text-center mb-4">Leaderboard</h3>
+                <table class="table table-dark text-center">
+                    <thead>
+                        <tr>
+                            <th>Rank</th>
+                            <th>Name</th>
+                            <th>Time (seconds)</th>
+                        </tr>
+                    </thead>
+                    <tbody id="leaderboard-body"></tbody>
+                </table>
             </div>
         </div>
 
-        <!-- Typing Game Section -->
 
-        <!-- Leaderboard Section -->
-        <div id="leaderboard-section" class="d-none my-5">
-            <h3 class="text-center mb-4">Leaderboard</h3>
-            <table class="table table-dark table-striped text-center">
-                <thead>
-                    <tr>
-                        <th>Rank</th>
-                        <th>Name</th>
-                        <th>Time (seconds)</th>
-                    </tr>
-                </thead>
-                <tbody id="leaderboard-body"></tbody>
-            </table>
-        </div>
     </div>
 
     <script src="assets/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
@@ -99,6 +101,9 @@
         const sentenceEl = document.getElementById("sentence");
         const progressEl = document.getElementById("progress");
 
+        const leaderboardSection = document.getElementById("leaderboard-section"); // NEW
+        const leaderboardBody = document.getElementById("leaderboard-body"); // NEW
+
         let sentence = "";
         let currentIndex = 0;
         let startTime;
@@ -107,6 +112,9 @@
 
         form.addEventListener("submit", function (e) {
             e.preventDefault();
+
+            // Assuming you have an input with id="playerName"
+            playerName = document.getElementById("playerName").value.trim() || "Anonymous"; // NEW
 
             nameSection.classList.add("d-none");
             gameSection.classList.remove("d-none");
@@ -139,26 +147,22 @@
             sentenceEl.innerHTML = `<div id="sentence-inner">${html}</div>`;
             const inner = document.getElementById("sentence-inner");
 
-            // safe: use .current if present, otherwise fallback to last char (prevents null errors)
             const currentCharEl = inner.querySelector(".current") || inner.lastElementChild;
             if (currentCharEl) {
                 const containerTop = sentenceEl.getBoundingClientRect().top;
                 const currentTop = currentCharEl.getBoundingClientRect().top;
-                // fallback line height if computed style is weird
                 const lineHeightPx = parseFloat(getComputedStyle(sentenceEl).lineHeight) || 24;
                 const currentLine = Math.floor((currentTop - containerTop) / lineHeightPx);
 
                 let shiftLines = 0;
                 if (currentLine >= 2) {
-                    shiftLines = currentLine - 1; // keep cursor on 2nd line
+                    shiftLines = currentLine - 1;
                 }
                 inner.style.transform = `translateY(${-shiftLines * lineHeightPx}px)`;
             } else {
-                // nothing to scroll
                 inner.style.transform = "";
             }
 
-            // ensure progress never exceeds sentence length
             const progressCount = Math.min(typedChars.length, sentence.length);
             progressEl.textContent = `${progressCount}/${sentence.length}`;
         }
@@ -192,7 +196,6 @@
 
             if (e.key.length !== 1) return;
 
-            // prevent typing more characters than the sentence length
             if (typedChars.length >= sentence.length) return;
 
             typedChars.push(e.key);
@@ -200,7 +203,6 @@
 
             renderSentence();
 
-            // completion check (exact match)
             if (typedChars.length === sentence.length &&
                 typedChars.every((char, i) => char === sentence[i])) {
                 endGame();
@@ -212,8 +214,52 @@
             const timeTaken = startTime ? ((Date.now() - startTime) / 1000).toFixed(2) : "0.00";
             progressEl.textContent = `Completed in ${timeTaken} seconds!`;
             document.removeEventListener("keydown", handleTyping);
+
+            saveToLeaderboard(playerName, timeTaken); // NEW
+            showLeaderboard(); // NEW
         }
+
+        // --- NEW: Save result to localStorage ---
+        function saveToLeaderboard(name, time) {
+            let leaderboard = JSON.parse(localStorage.getItem("leaderboard")) || [];
+            leaderboard.push({ name, time: parseFloat(time) });
+            leaderboard.sort((a, b) => a.time - b.time); // fastest first
+            leaderboard = leaderboard.slice(0, 10); // keep top 10
+            localStorage.setItem("leaderboard", JSON.stringify(leaderboard));
+        }
+
+        function showLeaderboard() {
+            const timeClass = document.getElementById("time");
+            timeClass.classList.add("d-none");
+
+            const sentenceClass = document.getElementById("sentence");
+            sentenceClass.classList.add("d-none");
+
+            const imgCat = document.getElementById("img-cat");
+            imgCat.classList.remove("d-none");
+
+            leaderboardBody.innerHTML = "";
+            let leaderboard = JSON.parse(localStorage.getItem("leaderboard")) || [];
+
+            // sort fastest first, keep top 5
+            leaderboard.sort((a, b) => a.time - b.time);
+            leaderboard = leaderboard.slice(0, 5);
+
+            leaderboard.forEach((entry, index) => {
+                leaderboardBody.innerHTML += `
+            <tr>
+                <td>${index + 1}</td>
+                <td>${entry.name}</td>
+                <td>${entry.time}</td>
+            </tr>
+        `;
+            });
+
+            leaderboardSection.classList.remove("d-none");
+        }
+
     </script>
+
 
 
 
