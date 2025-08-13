@@ -231,6 +231,8 @@ function endGame(timerExpired = false) {
 function showLeaderboard() {
     const timeClass = document.getElementById("time");
     timeClass.classList.add("d-none");
+    restartBtn.classList.add("d-none");
+    
     navbar.classList.remove("d-none");
 
     const sentenceClass = document.getElementById("sentence");

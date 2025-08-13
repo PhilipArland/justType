@@ -14,18 +14,15 @@
 <body class="text-white">
     <!-- Navigation -->
     <nav class="navbar navbar-expand-lg py-4">
-        <div class="container">
+        <div class="container-fluid">
             <a class="navbar-brand text-white fw-bold fs-2 text-uppercase letter-spacing-2" href="#">
-                Just Type
-                <span class="logo-icon ms-2">
-                    <i class="bi bi-keyboard"></i>
-                </span>
+                <img src="assets/img/logo/logo.png" class="img-fluid" height="220" width="220" alt="">
             </a>
             <button class="navbar-toggler border-0" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
                 <i class="bi bi-list text-white fs-4"></i>
             </button>
             <div class="collapse navbar-collapse" id="navbarNav">
-                <ul class="navbar-nav ms-auto">
+                <ul class="navbar-nav ms-auto" id="navbar-nav">
                     <li class="nav-item">
                         <a class="nav-link text-white fs-5 px-3 mx-lg-2" href="index.html" id="nav-home">
                             <i class="bi bi-house me-2"></i>Home
@@ -80,26 +77,43 @@
     <script>
         const leaderboardBody = document.getElementById("leaderboard-body");
         let leaderboard = JSON.parse(localStorage.getItem("leaderboard")) || [];
-        let sortByWpmAsc = false; // false = fastest first
+        let sortByWpmAsc = false; // false = descending (highest WPM first)
 
         function renderLeaderboard() {
             if (leaderboard.length > 0) {
                 leaderboardBody.innerHTML = leaderboard
-                    .sort((a, b) => b.wpm - a.wpm) // sort fastest first
                     .map((entry, index) => `
-                <tr>
-                    <td>${index + 1}</td>
-                    <td>${entry.name}</td>
-                    <td>${entry.time.toFixed(2)}</td>
-                    <td>${entry.wpm}</td>
-                    <td>${entry.errors}</td>
-                </tr>
-            `).join("");
+            <tr>
+                <td>${index + 1}</td>
+                <td>${entry.name}</td>
+                <td>${entry.time.toFixed(2)}</td>
+                <td>${entry.wpm}</td>
+                <td>${entry.errors}</td>
+            </tr>
+        `).join("");
             } else {
                 leaderboardBody.innerHTML = `<tr><td colspan="5">No scores yet</td></tr>`;
             }
         }
 
+        // Initial load
+        document.addEventListener("DOMContentLoaded", function () {
+            leaderboard.sort((a, b) => b.wpm - a.wpm); // default descending (fastest WPM first)
+            renderLeaderboard();
+            document.getElementById("leaderboard-section").classList.remove("d-none");
+        });
+
+        // Sort toggle by WPM
+        document.getElementById("sort-leaderboard").addEventListener("click", function () {
+            sortByWpmAsc = !sortByWpmAsc;
+            leaderboard.sort((a, b) => sortByWpmAsc ? a.wpm - b.wpm : b.wpm - a.wpm);
+
+            // Change icon
+            const sortIcon = this.querySelector("i");
+            sortIcon.className = sortByWpmAsc ? "bi bi-sort-numeric-up" : "bi bi-sort-numeric-down";
+
+            renderLeaderboard();
+        });
 
         // Clear leaderboard
         document.getElementById("clear-leaderboard").addEventListener("click", function () {
@@ -122,24 +136,6 @@
             });
         });
 
-        // Sort toggle by WPM
-        document.getElementById("sort-leaderboard").addEventListener("click", function () {
-            sortByWpmAsc = !sortByWpmAsc;
-            leaderboard.sort((a, b) => sortByWpmAsc ? a.wpm - b.wpm : b.wpm - a.wpm);
-
-            // Change icon
-            const sortIcon = this.querySelector("i");
-            sortIcon.className = sortByWpmAsc ? "bi bi-sort-numeric-up" : "bi bi-sort-numeric-down";
-
-            renderLeaderboard();
-        });
-
-        // Initial load
-        document.addEventListener("DOMContentLoaded", function () {
-            leaderboard.sort((a, b) => b.wpm - a.wpm); // default: fastest WPM first
-            renderLeaderboard();
-            document.getElementById("leaderboard-section").classList.remove("d-none");
-        });
     </script>
 
 
