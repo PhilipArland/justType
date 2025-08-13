@@ -18,6 +18,7 @@ const progressEl = document.getElementById("progress");
 const rankEl = document.getElementById("rank");
 const navbar = document.getElementById("navbar-nav");
 const restartBtn = document.getElementById("restartBtn");
+const tryAgainBtn = document.getElementById("tryAgainBtn");
 
 
 const leaderboardSection = document.getElementById("leaderboard-section");
@@ -28,7 +29,7 @@ let currentIndex = 0;
 let startTime;
 let timerInterval;
 let typedChars = [];
-let countdown = 60;
+let countdown = 3;
 let playerName = "";
 
 // Calculate WPM/Accuracy like Monkeytype
@@ -56,11 +57,11 @@ function calculateWPM(typedChars, sentence, elapsedTimeSec) {
     };
 }
 
-restartBtn.addEventListener("click", () => {
+function resetGame() {
     // Reset variables
     currentIndex = 0;
     typedChars = [];
-    countdown = 60;
+    countdown = 3;
     clearInterval(timerInterval);
     startTime = null;
 
@@ -69,18 +70,24 @@ restartBtn.addEventListener("click", () => {
     sentenceEl.classList.remove("d-none");
     document.getElementById("time").classList.add("d-none");
     restartBtn.classList.add("d-none");
+    tryAgainBtn.classList.add("d-none");
     navbar.classList.add("d-none");
     progressEl.textContent = "";
+    const imgCat = document.getElementById("img-cat");
+    imgCat.classList.add("d-none");
 
     // Rebuild a new sentence and render it
     const shuffled = [...sentences].sort(() => Math.random() - 0.5);
     sentence = shuffled.join(" ");
-
     renderSentence();
 
     // Re-add the typing event listener
     document.addEventListener("keydown", handleTyping);
-});
+}
+
+// Attach the same function to both buttons
+restartBtn.addEventListener("click", resetGame);
+tryAgainBtn.addEventListener("click", resetGame);
 
 form.addEventListener("submit", function (e) {
     e.preventDefault();
@@ -97,7 +104,7 @@ form.addEventListener("submit", function (e) {
     currentIndex = 0;
     startTime = null;
     typedChars = [];
-    countdown = 60;
+    countdown = 3;
     clearInterval(timerInterval);
     renderSentence();
     document.addEventListener("keydown", handleTyping);
@@ -216,12 +223,11 @@ function endGame(timerExpired = false) {
         entry.wpm === netWPM
     ) + 1;
 
-    leaderboard = leaderboard.slice(0, 10);
     localStorage.setItem("leaderboard", JSON.stringify(leaderboard));
 
     progressEl.innerHTML = timerExpired
-        ? `Time's up!<br>Congratulations! You ranked #${rank}`
-        : `Completed in ${timeTaken}s<br>Net WPM: ${netWPM}<br>Rank: #${rank}`;
+        ? `Time's up!<br>${rank <= 10 ? `Congratulations! You ranked #${rank}` : `You ranked below 10`}`
+        : `Completed in ${timeTaken}s<br>Net WPM: ${netWPM}<br>${rank <= 10 ? `Rank: #${rank}` : `You ranked below 10`}`;
 
     rankEl.textContent = ``;
     document.removeEventListener("keydown", handleTyping);
@@ -232,7 +238,8 @@ function showLeaderboard() {
     const timeClass = document.getElementById("time");
     timeClass.classList.add("d-none");
     restartBtn.classList.add("d-none");
-    
+    tryAgainBtn.classList.remove("d-none");
+
     navbar.classList.remove("d-none");
 
     const sentenceClass = document.getElementById("sentence");
