@@ -1,10 +1,14 @@
 const sentences = [
-    "Typing quickly and accurately is a valuable skill that can save time and improve productivity. By practicing regularly, you can increase your speed, reduce errors, and develop better focus."
-];
+    "typing quickly and accurately is a valuable skill that can save time and improve productivity by practicing regularly you can increase your speed reduce errors and develop better focus good posture proper hand placement and staying relaxed while typing are all important habits to maintain whether you are writing emails coding or creating reports efficient typing can make your work more enjoyable and less stressful",
 
-// const sentences = [
-//     "Try only",
-// ]
+    "the internet has revolutionized the way we communicate learn and work information is now available at our fingertips allowing us to explore topics in depth without leaving our homes however this convenience also comes with challenges such as the spread of misinformation and the need for digital literacy by staying critical and verifying sources we can make better use of this powerful tool",
+
+    "healthy living is more than just eating nutritious foods and exercising regularly it also involves getting enough sleep managing stress and building strong social connections small daily habits like staying hydrated and taking short breaks during work can greatly improve your well being over time consistency is key to creating a sustainable healthy lifestyle",
+
+    "traveling to new places can open your mind to different cultures and ways of life it allows you to see the world from new perspectives experience unique traditions and try unfamiliar foods even short trips can provide valuable memories and lessons whether you travel far or near the experiences can shape your worldview in meaningful ways",
+
+    "learning a new skill takes time patience and practice at first progress may feel slow but each small step builds a foundation for greater understanding setting realistic goals and celebrating milestones can keep motivation high over time persistence pays off and what once felt challenging becomes second nature"
+];
 
 const form = document.getElementById("gameForm");
 const nameSection = document.getElementById("name-section");
@@ -12,29 +16,58 @@ const gameSection = document.getElementById("game-section");
 const sentenceEl = document.getElementById("sentence");
 const progressEl = document.getElementById("progress");
 const rankEl = document.getElementById("rank");
+const navbar = document.getElementById("navbar-nav");
 
-const leaderboardSection = document.getElementById("leaderboard-section"); // NEW
-const leaderboardBody = document.getElementById("leaderboard-body"); // NEW
+const leaderboardSection = document.getElementById("leaderboard-section");
+const leaderboardBody = document.getElementById("leaderboard-body");
 
 let sentence = "";
 let currentIndex = 0;
 let startTime;
 let timerInterval;
 let typedChars = [];
+let countdown = 60;
+let playerName = "";
+
+// Calculate WPM/Accuracy like Monkeytype
+function calculateWPM(typedChars, sentence, elapsedTimeSec) {
+    const minutes = elapsedTimeSec / 60;
+
+    // Raw WPM = total typed characters / 5
+    const rawWPM = minutes > 0 ? (typedChars.length / 5) / minutes : 0;
+
+    // Net WPM = correct characters / 5
+    let correctChars = 0;
+    for (let i = 0; i < typedChars.length && i < sentence.length; i++) {
+        if (typedChars[i] === sentence[i]) correctChars++;
+    }
+    const netWPM = minutes > 0 ? (correctChars / 5) / minutes : 0;
+
+    const accuracy = typedChars.length > 0
+        ? (correctChars / typedChars.length) * 100
+        : 0;
+
+    return {
+        rawWPM: Number(rawWPM.toFixed(2)),
+        netWPM: Number(netWPM.toFixed(2)),
+        accuracy: Number(accuracy.toFixed(2))
+    };
+}
 
 form.addEventListener("submit", function (e) {
     e.preventDefault();
 
-    // Assuming you have an input with id="playerName"
-    playerName = document.getElementById("playerName").value.trim() || "Anonymous"; // NEW
+    playerName = document.getElementById("playerName").value.trim() || "Anonymous";
 
     nameSection.classList.add("d-none");
     gameSection.classList.remove("d-none");
 
-    sentence = sentences[0];
+    sentence = sentences[Math.floor(Math.random() * sentences.length)];
+
     currentIndex = 0;
     startTime = null;
     typedChars = [];
+    countdown = 60;
     clearInterval(timerInterval);
     renderSentence();
     document.addEventListener("keydown", handleTyping);
@@ -44,11 +77,9 @@ function renderSentence() {
     let html = "";
     for (let i = 0; i < sentence.length; i++) {
         if (i < typedChars.length) {
-            if (typedChars[i] === sentence[i]) {
-                html += `<span class="correct">${sentence[i]}</span>`;
-            } else {
-                html += `<span class="incorrect">${sentence[i]}</span>`;
-            }
+            html += typedChars[i] === sentence[i]
+                ? `<span class="correct">${sentence[i]}</span>`
+                : `<span class="incorrect">${sentence[i]}</span>`;
         } else if (i === typedChars.length) {
             html += `<span class="current">${sentence[i]}</span>`;
         } else {
@@ -74,28 +105,32 @@ function renderSentence() {
     } else {
         inner.style.transform = "";
     }
-
-    const progressCount = Math.min(typedChars.length, sentence.length);
-    progressEl.textContent = `${progressCount}/${sentence.length}`;
 }
 
 function handleTyping(e) {
     if (!startTime) {
         startTime = Date.now();
+        navbar.classList.add("d-none");
 
         const timeEl = document.getElementById("time");
         if (timeEl) timeEl.classList.remove("d-none");
 
         const updateTime = () => {
-            const elapsed = Math.floor((Date.now() - startTime) / 1000);
-            const min = Math.floor(elapsed / 60);
-            const sec = elapsed % 60;
+            countdown--;
+            const min = Math.floor(countdown / 60);
+            const sec = countdown % 60;
             if (timeEl) timeEl.textContent = `${min}:${sec.toString().padStart(2, "0")}`;
+
+            if (countdown <= 0) {
+                endGame(true);
+            }
         };
 
         updateTime();
         timerInterval = setInterval(updateTime, 1000);
     }
+
+    if (countdown <= 0) return;
 
     if (e.key === "Backspace") {
         if (typedChars.length > 0) {
@@ -103,90 +138,67 @@ function handleTyping(e) {
             currentIndex = Math.max(0, currentIndex - 1);
             renderSentence();
         }
-        return;
+    } else if (e.key.length === 1) {
+        typedChars.push(e.key);
+        currentIndex++;
+        renderSentence();
     }
 
-    if (e.key.length !== 1) return;
-
-    if (typedChars.length >= sentence.length) return;
-
-    typedChars.push(e.key);
-    currentIndex++;
-
-    renderSentence();
-
-    if (typedChars.length === sentence.length) {
-        endGame();
+    // Live stats update
+    if (startTime) {
+        const elapsedSec = (Date.now() - startTime) / 1000;
+        const { rawWPM, netWPM, accuracy } = calculateWPM(typedChars, sentence, elapsedSec);
+        progressEl.textContent = `Raw: ${rawWPM} | Net: ${netWPM} | Acc: ${accuracy}%`;
     }
 }
 
-function endGame() {
+function endGame(timerExpired = false) {
     clearInterval(timerInterval);
-    const timeTakenSec = startTime ? ((Date.now() - startTime) / 1000) : 0;
-    const timeTaken = Number(timeTakenSec.toFixed(2));
+    const elapsedSec = startTime ? ((Date.now() - startTime) / 1000) : 0;
+    const timeTaken = timerExpired ? 60 : Number(elapsedSec.toFixed(2));
 
-    // Count errors
+    const { rawWPM, netWPM, accuracy } = calculateWPM(typedChars, sentence, timeTaken);
+
     let errors = 0;
-    for (let i = 0; i < sentence.length; i++) {
+    for (let i = 0; i < typedChars.length && i < sentence.length; i++) {
         if (typedChars[i] !== sentence[i]) errors++;
     }
 
-    // Calculate WPM
-    const wordsCount = sentence.trim().length === 0 ? 0 : sentence.trim().split(/\s+/).length;
-    const minutes = timeTakenSec / 60;
-    let wpm = minutes > 0 ? Number((wordsCount / minutes).toFixed(2)) : 0;
-    wpm = Math.min(wpm, 100);
-
-    // Save temporary entry to compute rank
     let leaderboard = JSON.parse(localStorage.getItem("leaderboard")) || [];
-    const newEntry = { name: playerName, time: timeTaken, wpm, errors, text: sentence };
+    const newEntry = {
+        name: playerName,
+        time: timeTaken,
+        wpm: netWPM,
+        rawWPM,
+        accuracy,
+        errors,
+        text: sentence
+    };
     leaderboard.push(newEntry);
-    leaderboard.sort((a, b) => a.time - b.time);
+    leaderboard.sort((a, b) => b.wpm - a.wpm);
 
-    // Rank is index + 1
     const rank = leaderboard.findIndex(entry =>
         entry.name === playerName &&
         entry.time === timeTaken &&
-        entry.wpm === wpm &&
-        entry.errors === errors
+        entry.wpm === netWPM
     ) + 1;
 
-    // Save updated leaderboard (top 10)
     leaderboard = leaderboard.slice(0, 10);
     localStorage.setItem("leaderboard", JSON.stringify(leaderboard));
 
+    progressEl.innerHTML = timerExpired
+        ? `Time's up!<br>Congratulations! You ranked #${rank}`
+        : `Completed in ${timeTaken}s<br>Net WPM: ${netWPM}<br>Rank: #${rank}`;
 
-    // Show summary with rank
-    progressEl.innerHTML = `Completed in ${timeTaken}s <br> Congratulations! You ranked #${rank}`;
     rankEl.textContent = ``;
     document.removeEventListener("keydown", handleTyping);
-
     showLeaderboard();
-}
-
-
-// Save result to localStorage (store numbers + the sentence text)
-function saveToLeaderboard(name, time, wpm, errors, text) {
-    let leaderboard = JSON.parse(localStorage.getItem("leaderboard")) || [];
-    leaderboard.push({
-        name: name || "Anonymous",
-        time: Number(time),
-        wpm: Number(wpm),
-        errors: Number(errors),
-        text: text || ""
-    });
-
-    // Sort by fastest time (change if you prefer sorting by WPM)
-    leaderboard.sort((a, b) => a.time - b.time);
-
-    // Keep some reasonable number in storage (you only show top 5)
-    leaderboard = leaderboard.slice(0, 20);
-    localStorage.setItem("leaderboard", JSON.stringify(leaderboard));
 }
 
 function showLeaderboard() {
     const timeClass = document.getElementById("time");
     timeClass.classList.add("d-none");
+    navbar.classList.remove("d-none");
 
     const sentenceClass = document.getElementById("sentence");
     sentenceClass.classList.add("d-none");
@@ -197,49 +209,23 @@ function showLeaderboard() {
     leaderboardBody.innerHTML = "";
     let leaderboard = JSON.parse(localStorage.getItem("leaderboard")) || [];
 
-    // Upgrade old entries to include wpm/errors if missing
-    leaderboard = leaderboard.map(entry => {
-        if (!entry.text) return entry;
-
-        // Compute errors if missing
-        if (typeof entry.errors !== "number") {
-            let errors = 0;
-            for (let i = 0; i < entry.text.length; i++) {
-                if (!entry.typed || entry.typed[i] !== entry.text[i]) errors++;
-            }
-            entry.errors = errors;
-        }
-
-        // Compute wpm if missing
-        if (typeof entry.wpm !== "number" && entry.time) {
-            const words = entry.text.trim().length === 0 ? 0 : entry.text.trim().split(/\s+/).length;
-            const minutes = entry.time / 60;
-            entry.wpm = minutes > 0 ? Number((words / minutes).toFixed(2)) : 0;
-        }
-
-        return entry;
-    });
-
-    leaderboard.sort((a, b) => a.time - b.time);
+    leaderboard.sort((a, b) => b.wpm - a.wpm);
     leaderboard = leaderboard.slice(0, 5);
 
     const rows = leaderboard.map((entry, index) => `
-                <tr>
-                    <td>${index + 1}</td>
-                    <td>${entry.name}</td>
-                    <td>${entry.time.toFixed(2)}</td>
-                    <td>${entry.wpm ?? "—"}</td>
-                    <td>${entry.errors ?? "—"}</td>
-                </tr>
-                
-            `).join("");
+        <tr>
+            <td>${index + 1}</td>
+            <td>${entry.name}</td>
+            <td>${entry.time.toFixed(2)}</td>
+            <td>${entry.wpm}</td>
+            <td>${entry.errors}</td>
+        </tr>
+    `).join("");
 
     leaderboardBody.innerHTML = rows;
     leaderboardSection.classList.remove("d-none");
 }
 
-
-// small helper to avoid HTML injection in names
 function escapeHtml(str) {
     if (!str) return "";
     return String(str)
