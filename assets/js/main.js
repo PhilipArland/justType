@@ -62,7 +62,9 @@ form.addEventListener("submit", function (e) {
     nameSection.classList.add("d-none");
     gameSection.classList.remove("d-none");
 
-    sentence = sentences[Math.floor(Math.random() * sentences.length)];
+    // Pick a long sentence by combining several from the list
+    const shuffled = [...sentences].sort(() => Math.random() - 0.5); // shuffle
+    sentence = shuffled.join(" "); // join all into one long text
 
     currentIndex = 0;
     startTime = null;
