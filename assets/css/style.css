@@ -143,6 +143,14 @@ body {
         height: 90vh;
     }
 
+    .navbar {
+        height: 10vh;
+    }
+
+    .game-container {
+        height: 80vh;
+    }
+
     .navbar img {
         height: 60px;
         width: auto;
@@ -165,5 +173,5 @@ body {
     #progress {
         font-size: 0.8rem;
     }
-    
+
 }
