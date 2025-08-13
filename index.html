@@ -64,7 +64,13 @@
 
             <!-- Typing Game Section -->
             <div id="game-section" class="d-none text-center my-5 game-section">
-                <h2 id="time" class="text-start text-warning fw-bold d-none timeClass"></h2>
+                <div class="d-flex align-items-center justify-content-between">
+                    <h2 id="time" class="text-start text-warning fw-bold d-none timeClass mb-0"></h2>
+                    <button id="restartBtn" class="btn btn-sm btn-warning ms-2 d-none">
+                        <i class="bi bi-arrow-clockwise"></i>
+                    </button>
+                </div>
+
                 <p id="sentence" class="sentenceClass"></p>
                 <img src="assets/img/cat.gif" id="img-cat" class="img-fluid d-none" height="150" width="150" alt="">
                 <p id="progress" class="text-info"></p>

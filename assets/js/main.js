@@ -17,6 +17,8 @@ const sentenceEl = document.getElementById("sentence");
 const progressEl = document.getElementById("progress");
 const rankEl = document.getElementById("rank");
 const navbar = document.getElementById("navbar-nav");
+const restartBtn = document.getElementById("restartBtn");
+
 
 const leaderboardSection = document.getElementById("leaderboard-section");
 const leaderboardBody = document.getElementById("leaderboard-body");
@@ -53,6 +55,32 @@ function calculateWPM(typedChars, sentence, elapsedTimeSec) {
         accuracy: Number(accuracy.toFixed(2))
     };
 }
+
+restartBtn.addEventListener("click", () => {
+    // Reset variables
+    currentIndex = 0;
+    typedChars = [];
+    countdown = 60;
+    clearInterval(timerInterval);
+    startTime = null;
+
+    // Hide leaderboard and other UI elements
+    leaderboardSection.classList.add("d-none");
+    sentenceEl.classList.remove("d-none");
+    document.getElementById("time").classList.add("d-none");
+    restartBtn.classList.add("d-none");
+    navbar.classList.add("d-none");
+    progressEl.textContent = "";
+
+    // Rebuild a new sentence and render it
+    const shuffled = [...sentences].sort(() => Math.random() - 0.5);
+    sentence = shuffled.join(" ");
+
+    renderSentence();
+
+    // Re-add the typing event listener
+    document.addEventListener("keydown", handleTyping);
+});
 
 form.addEventListener("submit", function (e) {
     e.preventDefault();
@@ -113,6 +141,9 @@ function handleTyping(e) {
     if (!startTime) {
         startTime = Date.now();
         navbar.classList.add("d-none");
+
+        const restartBtn = document.getElementById("restartBtn");
+        restartBtn.classList.remove("d-none");
 
         const timeEl = document.getElementById("time");
         if (timeEl) timeEl.classList.remove("d-none");
