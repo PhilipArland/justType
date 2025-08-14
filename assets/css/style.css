@@ -94,8 +94,8 @@ body {
     left: -2px;
     /* slightly before the letter */
     top: 0;
-    height: 100%;
-    width: 3px;
+    height: 1em;
+    width: 2px;
     background-color: #FFD700;
     /* caret color */
     animation: blink 1s ease-in-out infinite;
