@@ -29,7 +29,7 @@ let currentIndex = 0;
 let startTime;
 let timerInterval;
 let typedChars = [];
-let countdown = 3;
+let countdown = 60;
 let playerName = "";
 
 // Calculate WPM/Accuracy like Monkeytype
@@ -61,7 +61,7 @@ function resetGame() {
     // Reset variables
     currentIndex = 0;
     typedChars = [];
-    countdown = 3;
+    countdown = 60;
     clearInterval(timerInterval);
     startTime = null;
 
@@ -104,7 +104,7 @@ form.addEventListener("submit", function (e) {
     currentIndex = 0;
     startTime = null;
     typedChars = [];
-    countdown = 3;
+    countdown = 60;
     clearInterval(timerInterval);
     renderSentence();
     document.addEventListener("keydown", handleTyping);
